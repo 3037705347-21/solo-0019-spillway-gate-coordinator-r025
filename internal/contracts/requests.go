@@ -25,3 +25,19 @@ type ExecuteCommandRequest struct {
 	Token         string `json:"token"`
 	SimulateFault bool   `json:"simulate_fault"`
 }
+
+type RegisterAlarmRequest struct {
+	Source       string `json:"source"`
+	Severity     string `json:"severity"`
+	Detail       string `json:"detail"`
+	RegisteredBy string `json:"registered_by"`
+}
+
+type AcknowledgeAlarmRequest struct {
+	AcknowledgedBy string `json:"acknowledged_by"`
+}
+
+type CloseAlarmRequest struct {
+	Resolution string `json:"resolution"`
+	ClosedBy   string `json:"closed_by"`
+}

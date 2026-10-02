@@ -26,6 +26,14 @@
     {
       "workflow_id": "execute-gate-command",
       "command": "go run ./cmd/workflowcheck --workflow execute-gate-command"
+    },
+    {
+      "workflow_id": "gate-alarm",
+      "command": "go run ./cmd/workflowcheck --workflow gate-alarm"
+    },
+    {
+      "workflow_id": "alarm-review-concurrency",
+      "command": "go run ./cmd/workflowcheck --workflow alarm-review-concurrency"
     }
   ]
 }

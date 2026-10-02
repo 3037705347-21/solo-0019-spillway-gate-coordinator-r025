@@ -27,4 +27,22 @@ type Repository interface {
 		simulateFault bool,
 		now time.Time,
 	) (domain.GateCommand, domain.Gate, error)
+	CreateAlarm(ctx context.Context, alarm domain.GateAlarm) error
+	Alarm(ctx context.Context, gateID string, alarmID string) (domain.GateAlarm, error)
+	Alarms(ctx context.Context, gateID string) ([]domain.GateAlarm, error)
+	AcknowledgeAlarm(
+		ctx context.Context,
+		gateID string,
+		alarmID string,
+		acknowledgedBy string,
+		now time.Time,
+	) (domain.GateAlarm, error)
+	CloseAlarm(
+		ctx context.Context,
+		gateID string,
+		alarmID string,
+		resolution string,
+		closedBy string,
+		now time.Time,
+	) (domain.GateAlarm, error)
 }

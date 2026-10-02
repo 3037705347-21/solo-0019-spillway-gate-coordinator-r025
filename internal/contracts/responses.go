@@ -40,6 +40,24 @@ type CommandView struct {
 	Version          int64                  `json:"version"`
 }
 
+type AlarmView struct {
+	ID             string `json:"id"`
+	GateID         string `json:"gate_id"`
+	Source         string `json:"source"`
+	Severity       string `json:"severity"`
+	Detail         string `json:"detail,omitempty"`
+	RegisteredBy   string `json:"registered_by"`
+	Status         string `json:"status"`
+	AcknowledgedBy string `json:"acknowledged_by,omitempty"`
+	AcknowledgedAt string `json:"acknowledged_at,omitempty"`
+	Resolution     string `json:"resolution,omitempty"`
+	ClosedBy       string `json:"closed_by,omitempty"`
+	ClosedAt       string `json:"closed_at,omitempty"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+	Version        int64  `json:"version"`
+}
+
 type RegisterGateResponse struct {
 	Gate GateView `json:"gate"`
 }
@@ -60,4 +78,12 @@ type ReviewCommandResponse struct {
 type ExecuteCommandResponse struct {
 	Command CommandView `json:"command"`
 	Gate    GateView    `json:"gate"`
+}
+
+type AlarmResponse struct {
+	Alarm AlarmView `json:"alarm"`
+}
+
+type AlarmListResponse struct {
+	Alarms []AlarmView `json:"alarms"`
 }

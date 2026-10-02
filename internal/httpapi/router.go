@@ -20,6 +20,11 @@ func NewRouter(service *coordination.Service) http.Handler {
 	mux.HandleFunc("GET /commands/{id}", h.command)
 	mux.HandleFunc("POST /commands/{id}/interlock", h.reviewInterlock)
 	mux.HandleFunc("POST /commands/{id}/execute", h.executeCommand)
+	mux.HandleFunc("POST /gates/{gateID}/alarms", h.registerAlarm)
+	mux.HandleFunc("GET /gates/{gateID}/alarms", h.alarms)
+	mux.HandleFunc("GET /gates/{gateID}/alarms/{alarmID}", h.alarm)
+	mux.HandleFunc("POST /gates/{gateID}/alarms/{alarmID}/acknowledge", h.acknowledgeAlarm)
+	mux.HandleFunc("POST /gates/{gateID}/alarms/{alarmID}/close", h.closeAlarm)
 	return recoverMiddleware(mux)
 }
 

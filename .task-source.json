@@ -40,6 +40,21 @@
         "blocked 结论不能占用闸门",
         "clear 结论必须与闸门占用一起成功"
       ]
+    },
+    {
+      "id": "gate_alarm",
+      "label": "闸门异常告警",
+      "relations": [
+        "gate_alarm.gate_id belongs_to gate.id",
+        "gate_alarm registered_by monitor_or_duty_staff"
+      ],
+      "invariants": [
+        "告警独立于命令存在，异常来源不能为空",
+        "级别只能是 advisory 或 blocking",
+        "未关闭的 blocking 告警阻止新命令占用闸门",
+        "确认不解除阻断，只有关闭解除阻断",
+        "关闭必须携带当前处置依据，关闭为单向终态且历史不可改写"
+      ]
     }
   ],
   "state_machines": [
@@ -84,6 +99,25 @@
         "只有 pending 可以复核",
         "只有 approved 可以执行",
         "终态不可回退",
+        "版本号在每次转换后递增"
+      ]
+    },
+    {
+      "subject": "gate_alarm",
+      "states": [
+        "open",
+        "acknowledged",
+        "closed"
+      ],
+      "transitions": [
+        "open->acknowledged",
+        "open->closed",
+        "acknowledged->closed"
+      ],
+      "invariants": [
+        "acknowledged 表示现场已看到但不解除阻断",
+        "closed 必须记录当前处置依据和关闭人",
+        "closed 不可回退、不可重复关闭、处置依据不可改写",
         "版本号在每次转换后递增"
       ]
     }
@@ -167,6 +201,16 @@
       "workflow_id": "execute-gate-command",
       "description": "执行必须同时校验活动命令、命令状态和一次性令牌；故障路径还要原子地中止命令并把闸门锁存为 faulted",
       "observable_failure": "错误或复用令牌仍改变状态，故障时只更新命令未更新闸门，或只更新闸门未清除活动引用"
+    },
+    {
+      "workflow_id": "gate-alarm",
+      "description": "告警是独立记录而非命令故障的附属锁存；确认表示现场已看到，关闭才表示处置完成，两者不能互相替代",
+      "observable_failure": "确认告警后阻断被解除，或无处置依据即可关闭，或关闭后历史被改写、可重复关闭"
+    },
+    {
+      "workflow_id": "alarm-review-concurrency",
+      "description": "阻断级告警登记与 clear 复核并发时，阻断检查和闸门占用共用同一临界区，只能串行出一个与现场一致的赢家",
+      "observable_failure": "复核成功占用但阻断告警仍生效却返回成功，或命令 approved 而闸门 idle，或同一闸门出现两次成功占用"
     }
   ]
 }

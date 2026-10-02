@@ -124,6 +124,49 @@
         "storage",
         "contracts"
       ]
+    },
+    {
+      "id": "gate-alarm",
+      "name": "Register and handle gate alarm",
+      "entry": "POST /gates/{id}/alarms",
+      "steps": [
+        "register an independent alarm with source, severity, detail, and registrar",
+        "acknowledge that on-site staff have seen the alarm without lifting its effect",
+        "close the alarm with current disposition facts and preserve the immutable record",
+        "block clear interlock occupation while a blocking alarm is open or acknowledged"
+      ],
+      "success": "returns the alarm through open, acknowledged, and closed statuses; occupation is allowed again only after closure",
+      "failure": "returns invalid input for unknown severity or missing source/resolution, conflict for duplicate acknowledgement or rewrite of a closed alarm",
+      "verification": "workflowcheck registers alarms, proves acknowledgement does not replace closure, closes with disposition facts, verifies history is immutable, and confirms advisory alarms never block",
+      "module_ids": [
+        "entrypoint",
+        "httpapi",
+        "coordination",
+        "domain",
+        "storage",
+        "contracts"
+      ]
+    },
+    {
+      "id": "alarm-review-concurrency",
+      "name": "Concurrent alarm handling and interlock review",
+      "entry": "POST /gates/{id}/alarms raced with POST /commands/{id}/interlock",
+      "steps": [
+        "fire blocking alarm registration and clear interlock review concurrently",
+        "serialize both operations through the repository critical section",
+        "assert each gate ends in exactly one site-consistent outcome"
+      ],
+      "success": "either the review wins once (command approved, gate reserved) or the alarm wins once (command pending, gate idle, review refused)",
+      "failure": "any mixed outcome such as an approved command on an idle gate, an occupied gate with a pending command, or two successful occupations",
+      "verification": "workflowcheck repeats the race over many independent gates and validates the post-race invariants for every gate",
+      "module_ids": [
+        "entrypoint",
+        "httpapi",
+        "coordination",
+        "domain",
+        "storage",
+        "contracts"
+      ]
     }
   ],
   "complexity": {

@@ -79,3 +79,30 @@ func fixtureClearReview(
 	}
 	return command, nil
 }
+
+func fixtureAlarm(
+	client *apiClient,
+	gateID string,
+	source string,
+	severity string,
+	detail string,
+	registeredBy string,
+) (map[string]any, error) {
+	result, err := client.post("/gates/"+gateID+"/alarms", map[string]any{
+		"source":        source,
+		"severity":      severity,
+		"detail":        detail,
+		"registered_by": registeredBy,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := requireStatus(result, http.StatusCreated, "create fixture alarm"); err != nil {
+		return nil, err
+	}
+	alarm, err := objectField(result.Body, "alarm")
+	if err != nil {
+		return nil, fmt.Errorf("create fixture alarm response: %w", err)
+	}
+	return alarm, nil
+}

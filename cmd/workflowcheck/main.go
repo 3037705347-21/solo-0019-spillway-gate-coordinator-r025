@@ -32,6 +32,10 @@ func main() {
 		err = runReviewSafetyInterlock(client)
 	case "execute-gate-command":
 		err = runExecuteGateCommand(client)
+	case "gate-alarm":
+		err = runGateAlarm(client)
+	case "alarm-review-concurrency":
+		err = runAlarmReviewConcurrency(client)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown workflow: %s\n", *workflow)
 		os.Exit(2)
