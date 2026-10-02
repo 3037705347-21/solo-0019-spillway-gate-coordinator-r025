@@ -53,3 +53,41 @@ func commandView(command domain.GateCommand, includeToken bool) contracts.Comman
 	}
 	return view
 }
+
+func alarmView(alarm domain.GateAlarm) contracts.AlarmView {
+	view := contracts.AlarmView{
+		ID:         alarm.ID,
+		GateID:     alarm.GateID,
+		Source:     alarm.Source,
+		Level:      string(alarm.Level),
+		Basis:      alarm.Basis,
+		Note:       alarm.Note,
+		ReportedBy: alarm.ReportedBy,
+		Status:     string(alarm.Status),
+		CreatedAt:  formatTime(alarm.CreatedAt),
+		UpdatedAt:  formatTime(alarm.UpdatedAt),
+		Version:    alarm.Version,
+	}
+	if alarm.Acknowledgement != nil {
+		view.Acknowledgement = &contracts.AlarmAcknowledgementView{
+			AcknowledgedBy: alarm.Acknowledgement.AcknowledgedBy,
+			AcknowledgedAt: formatTime(alarm.Acknowledgement.AcknowledgedAt),
+		}
+	}
+	if alarm.Closure != nil {
+		view.Closure = &contracts.AlarmClosureView{
+			HandledBy:  alarm.Closure.HandledBy,
+			Resolution: alarm.Closure.Resolution,
+			ClosedAt:   formatTime(alarm.Closure.ClosedAt),
+		}
+	}
+	return view
+}
+
+func alarmViews(alarms []domain.GateAlarm) []contracts.AlarmView {
+	views := make([]contracts.AlarmView, 0, len(alarms))
+	for _, alarm := range alarms {
+		views = append(views, alarmView(alarm))
+	}
+	return views
+}

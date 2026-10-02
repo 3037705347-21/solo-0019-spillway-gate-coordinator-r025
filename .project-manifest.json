@@ -124,6 +124,28 @@
         "storage",
         "contracts"
       ]
+    },
+    {
+      "id": "handle-gate-alarm",
+      "name": "Handle gate alarm",
+      "entry": "POST /gates/{id}/alarms",
+      "steps": [
+        "register the abnormal source, level, basis, and reporter as an independent record",
+        "append an acknowledgement proving the field team saw the alarm",
+        "close the acknowledged alarm with current handling facts",
+        "block gate occupation by an unclosed blocking-level alarm under the repository lock"
+      ],
+      "success": "records the open to acknowledged to closed lifecycle without rewriting history, and allows occupation only after every blocking alarm is closed",
+      "failure": "returns conflict for closing without acknowledgement, repeated acknowledgement or closure, and a clear review while a blocking alarm is unclosed; returns invalid input for missing handling facts",
+      "verification": "workflowcheck covers the full lifecycle, advisory non-blocking, multiple blocking alarms, and concurrent closure-versus-review consistency over repeated rounds",
+      "module_ids": [
+        "entrypoint",
+        "httpapi",
+        "coordination",
+        "domain",
+        "storage",
+        "contracts"
+      ]
     }
   ],
   "complexity": {

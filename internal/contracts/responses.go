@@ -61,3 +61,42 @@ type ExecuteCommandResponse struct {
 	Command CommandView `json:"command"`
 	Gate    GateView    `json:"gate"`
 }
+
+type AlarmAcknowledgementView struct {
+	AcknowledgedBy string `json:"acknowledged_by"`
+	AcknowledgedAt string `json:"acknowledged_at"`
+}
+
+type AlarmClosureView struct {
+	HandledBy  string `json:"handled_by"`
+	Resolution string `json:"resolution"`
+	ClosedAt   string `json:"closed_at"`
+}
+
+type AlarmView struct {
+	ID              string                    `json:"id"`
+	GateID          string                    `json:"gate_id"`
+	Source          string                    `json:"source"`
+	Level           string                    `json:"level"`
+	Basis           string                    `json:"basis"`
+	Note            string                    `json:"note,omitempty"`
+	ReportedBy      string                    `json:"reported_by"`
+	Status          string                    `json:"status"`
+	Acknowledgement *AlarmAcknowledgementView `json:"acknowledgement,omitempty"`
+	Closure         *AlarmClosureView         `json:"closure,omitempty"`
+	CreatedAt       string                    `json:"created_at"`
+	UpdatedAt       string                    `json:"updated_at"`
+	Version         int64                     `json:"version"`
+}
+
+type RegisterAlarmResponse struct {
+	Alarm AlarmView `json:"alarm"`
+}
+
+type AlarmResponse struct {
+	Alarm AlarmView `json:"alarm"`
+}
+
+type GateAlarmsResponse struct {
+	Alarms []AlarmView `json:"alarms"`
+}

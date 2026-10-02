@@ -1,6 +1,6 @@
 # 泄洪闸门操作协调服务
 
-这是一个无外部依赖的 Go 后端，用本地内存仓库协调闸门登记、开度调整命令、安全联锁复核和执行结果。服务强调单闸门活动命令互斥、原子状态转换、执行令牌生命周期和稳定错误传播。
+这是一个无外部依赖的 Go 后端，用本地内存仓库协调闸门登记、开度调整命令、安全联锁复核和执行结果。服务强调单闸门活动命令互斥、原子状态转换、执行令牌生命周期、阻断级告警占用拦截和稳定错误传播。
 
 ## 运行
 
@@ -20,6 +20,11 @@ POST /commands
 GET  /commands/{id}
 POST /commands/{id}/interlock
 POST /commands/{id}/execute
+POST /gates/{id}/alarms
+GET  /gates/{id}/alarms
+GET  /alarms/{id}
+POST /alarms/{id}/acknowledge
+POST /alarms/{id}/close
 ```
 
 登记闸门示例：
@@ -64,6 +69,35 @@ POST /commands/{id}/execute
 }
 ```
 
+登记闸门告警（`level` 为 `blocking` 阻断级或 `advisory` 提示级）：
+
+```json
+{
+  "source": "vibration-sensor",
+  "level": "blocking",
+  "basis": "巡检发现闸门异常振动信号",
+  "note": "等待现场确认",
+  "reported_by": "monitor-zhou"
+}
+```
+
+确认告警（表示现场已看到，不解除阻断）：
+
+```json
+{"acknowledged_by": "duty-gao"}
+```
+
+关闭告警（必须先确认，并提供当前处置事实）：
+
+```json
+{
+  "handled_by": "repair-han",
+  "resolution": "现场更换传感器并复测正常"
+}
+```
+
+未关闭的阻断级告警会阻止 clear 复核占用闸门，错误码为 `gate_alarm_blocking`；待复核命令仍可登记，但占用必须等到告警关闭后。
+
 ## 目录
 
 - `cmd/server`：服务进程。
@@ -82,6 +116,7 @@ go run ./cmd/workflowcheck --workflow register-gate
 go run ./cmd/workflowcheck --workflow request-gate-command
 go run ./cmd/workflowcheck --workflow review-safety-interlock
 go run ./cmd/workflowcheck --workflow execute-gate-command
+go run ./cmd/workflowcheck --workflow handle-gate-alarm
 ```
 
 这些检查会创建临时 HTTP 服务并调用真实路由。它们不调用外部网络，也不依赖数据库。

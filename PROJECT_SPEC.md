@@ -9,12 +9,14 @@
 - 运行协调员：登记闸门并提交开度调整命令。
 - 安全复核员：提交联锁结论，决定命令是否通过。
 - 闸门操作员：凭执行令牌启动命令并登记执行结果。
+- 监控/值班人员：登记闸门异常告警，确认现场已看到并基于处置事实关闭告警。
 
 ## 核心实体
 
 - `gate`：闸门及其当前开度、运行状态、最大开度和活动命令。
 - `gate_command`：一次开度调整申请，包含目标开度、申请原因、状态和执行令牌。
 - `interlock_decision`：安全复核结论，状态为 clear 或 blocked。
+- `gate_alarm`：独立的闸门异常告警记录，包含异常来源、级别（advisory/blocking）、登记依据和登记人；确认记录与关闭处置事实只追加，不改写历史。
 
 ## 业务流程
 
@@ -34,13 +36,29 @@
 
 闸门操作员通过 `POST /commands/{id}/execute` 提交执行令牌。服务校验命令、令牌、闸门占用关系和目标开度，在临界区内完成 approved、executing、completed 或 aborted 的转换，并同步更新闸门状态。令牌在命令结束后失效，不能复用。
 
+### register-gate-alarm
+
+监控或值班人员通过 `POST /gates/{id}/alarms` 登记异常来源、级别、登记依据和登记人，创建 open 状态的独立告警记录。告警不依附于命令的故障锁存：同一闸门可以保留多条历史告警，重复登记不会覆盖旧记录。
+
+### acknowledge-gate-alarm
+
+值班人员通过 `POST /alarms/{id}/acknowledge` 确认告警，表示现场已经看到。确认只追加确认人与确认时间，状态 open -> acknowledged。确认不代表关闭：阻断级告警确认后仍然阻止命令占用。
+
+### close-gate-alarm
+
+处置人员通过 `POST /alarms/{id}/close` 提交处理人和当前处置结果，状态 acknowledged -> closed。关闭前必须先确认，关闭时必须携带当前处置事实；确认记录、关闭记录与登记字段一同保留，历史告警不可被改写，重复确认或重复关闭返回稳定冲突错误。
+
 ## 状态与规则
 
 - `gate` 状态：idle、reserved、moving、faulted。
 - `gate_command` 状态：pending、approved、rejected、executing、completed、aborted。
+- `gate_alarm` 状态：open、acknowledged、closed；转换为 open -> acknowledged -> closed，均为单向。
 - 只有 pending 命令可以复核。
 - 只有 approved 命令可以执行，且执行令牌必须匹配。
 - clear 复核与闸门占用必须同时成功；任一步失败时两者都不写入。
+- 存在未关闭（open 或 acknowledged）的阻断级告警时，clear 复核不能占用闸门，返回 `gate_alarm_blocking` 冲突且不改变命令与闸门。
+- 提示级（advisory）告警不阻止命令占用。
+- 告警关闭与 clear 复核在同一把仓库互斥锁下完成；并发时只可能产生一个与现场一致的结果：命令 approved 必须恰好伴随闸门被该命令预留，冲突失败必须恰好保持命令 pending 与闸门 idle。
 - blocked 复核使命令 rejected，不会占用闸门。
 - 模拟故障会令命令 aborted、闸门 faulted，并保留最终开度。
 - 已完成或已中止的命令不能再次执行。
@@ -64,6 +82,11 @@
 - `GET /commands/{id}`
 - `POST /commands/{id}/interlock`
 - `POST /commands/{id}/execute`
+- `POST /gates/{id}/alarms`
+- `GET /gates/{id}/alarms`
+- `GET /alarms/{id}`
+- `POST /alarms/{id}/acknowledge`
+- `POST /alarms/{id}/close`
 
 错误响应统一为：
 
